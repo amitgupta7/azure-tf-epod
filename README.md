@@ -14,7 +14,7 @@ brew install terraform
 brew install azure-cli
 $> az login
 ## Deploy the jump-box (with azure-cli or use included jumpbox helper script)
-~$> az vm create --resource-group your-resource-group --name epod-training-jumpbox-$RANDOM --image UbuntuLTS --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4~
+$> az vm create --resource-group your-resource-group --name epod-training-jumpbox-$RANDOM --image UbuntuLTS --admin-username "azuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4
 ## login to the vm with ssh to run install terraform and provision the epod.
 ## ssh azuser@[jumpbox-hostname]
 ## clean-up with tfda command
