@@ -7,14 +7,6 @@ variable "region" {
   default = "westus2"
 }
 
-variable "azuser" {
-  default = "azuser"
-}
-
-variable "azpwd" {
-  description = "common vm password, 16 characters containg --> [chars-alpha-num-special-char]"
-}
-
 variable "vm_size" {
   default = "Standard_D32s_v3"
 }
@@ -83,8 +75,18 @@ variable "max_node_count" {
   description = "AKS max nodes"
 }
 
-variable "address_space" {}
+variable "address_space" {
+  default = ["192.168.1.0/24"]
+}
 
-variable "service_subnet_address_prefixes" {}
+variable "bastion_address_prefix" {
+  default = ["192.168.1.224/27"]
+}
 
-variable "endpoint_subnet_address_prefixes" {}
+variable "service_subnet_address_prefixes" {
+  default = ["192.168.1.0/28"]
+}
+
+variable "endpoint_subnet_address_prefixes" {
+  default = ["192.168.1.16/28"]
+}
