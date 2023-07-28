@@ -24,10 +24,20 @@ $> cd azure-tf-epod
 $> source tfAlias
 $> tf init 
 ## provision infra for pods provide EXISTING resource group name,
-## azure subscription-id and vm-password on prompt
+## provide azure subscription-id and az-name-prefix on prompt.
 $> tfaa 
 ## to de-provision provide EXISTING resource group name, 
-## azure subscription-id and vm-password on prompt 
+## azure subscription-id and az-name-prefix on prompt 
 ## EXACTLY SAME VALUES AS PROVIDED DURING PROVISIONING
 $> tfda
+```
+Create a `terraform.tfvars` file to proivide azure subscription id and existing resource group. And/Or override default cidr values for infra provisioning. e.g.
+```hcl
+az_subscription_id = "your-azure-subscription-id"
+az_resource_group  = "existing-resource-group-in-azure"
+az_name_prefix     = "unique-prefix-to-use-in-resource-names"
+bastion_address_prefix           = ["192.168.1.224/27"]
+address_space                    = ["192.168.1.0/24"]
+service_subnet_address_prefixes  = ["192.168.1.0/28"]
+endpoint_subnet_address_prefixes = ["192.168.1.16/28"]
 ```
