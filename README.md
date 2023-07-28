@@ -2,23 +2,25 @@
 This repo provides an example to create the necessary azure infrastructure for deployment of epods. This is presently a wip and not complete. Provided as-is, only for demo/training purposes.
 
 ## Prerequisites
-The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac).
+The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a bastion machine on azure first, after which we will be able to provision the infrastructure and install epods from the bastion machine.
 
-NOTE: These are mac instructions (homebrew -> terraform --> azure cli). Provided as-is. 
+NOTE: These are mac instructions (homebrew --> azure cli --> bastion-machine --> terraform). Provided as-is. 
 ```shell
 #install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-## install terraform
-brew install terraform
 ## install az cli
 brew install azure-cli
 $> az login
-## az group create ....
+$> az vm create --resource-group your-resource-group --name epod-training-bastion-$RANDOM --image Canonical:UbuntuServer:18.04-DAILY-LTS:18.04.202209160 --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4
+## login to the vm with ssh to run install terraform and provision the epod.
+## ssh azureuser@[vm-ip-address]
 ```
 
 ## To use the tfscript
-Clone `main` branch. Alternatively use [released packages](https://github.com/amitgupta7/azure-tf-vms/releases)
+Clone `main` branch on the bastion machine. Alternatively use [released packages](https://github.com/amitgupta7/azure-tf-vms/releases)
 ```shell
+$> sudo apt install terraform azure-cli
+$> az login
 $> git clone https://github.com/amitgupta7/azure-tf-epod.git
 $> cd azure-tf-epod
 $> source tfAlias
