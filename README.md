@@ -41,3 +41,12 @@ address_space                    = ["192.168.1.0/24"]
 service_subnet_address_prefixes  = ["192.168.1.0/28"]
 endpoint_subnet_address_prefixes = ["192.168.1.16/28"]
 ```
+
+##  Connecting to AKS
+```shell
+$> sudo az aks install-cli
+$> az aks get-credentials --resource-group my-resource-group --name my-name-prefix-aks
+$> kubectl get nodes
+NAME                             STATUS   ROLES   AGE   VERSION
+aks-system-25983833-vmss000000   Ready    agent   22m   v1.24.10
+```
