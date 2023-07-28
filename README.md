@@ -26,9 +26,9 @@ $> git clone https://github.com/amitgupta7/azure-tf-epod.git
 $> source tfAlias
 $> cd azure-tf-epod/jumpbox
 $> tf init
-$> tfaa -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=5tgb%TGB6yhn^YHN"
+$> tfaa -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=strong_password_here"
 ## clean-up
-$> tfda -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=5tgb%TGB6yhn^YHN"
+$> tfda -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=strong_password_here"
 ```
 
 ## To use the tfscript
