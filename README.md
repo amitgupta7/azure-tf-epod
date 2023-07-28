@@ -19,8 +19,13 @@ $> az vm create --resource-group your-resource-group --name epod-training-bastio
 ## To use the tfscript
 Clone `main` branch on the bastion machine. Alternatively use [released packages](https://github.com/amitgupta7/azure-tf-vms/releases)
 ```shell
-$> sudo apt install terraform azure-cli
+## Install Terraform and azure-cli
+$> sudo snap install terraform --classic
+$> sudo apt-get update
+$> sudo apt-get install -y libssl-dev libffi-dev python3-dev build-essential
+$> curl -L https://aka.ms/InstallAzureCli | bash
 $> az login
+## Get this script to provision the infrastruture
 $> git clone https://github.com/amitgupta7/azure-tf-epod.git
 $> cd azure-tf-epod
 $> source tfAlias
