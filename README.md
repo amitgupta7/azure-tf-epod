@@ -2,7 +2,7 @@
 This repo provides an example to create the necessary azure infrastructure for deployment of epods. This is presently a wip and not complete. Provided as-is, only for demo/training purposes.
 
 ## Prerequisites
-The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a bastion machine on azure first, after which we will be able to provision the infrastructure and install epods from the bastion machine.
+The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a bastion machine on azure first, after which we will be able to provision the infrastructure and install epods from the bastion machine. We do this because the bastion machine on the azure cloud will have more stable internet, and would be less dependent on local network. 
 
 NOTE: These are mac instructions (homebrew --> azure cli --> bastion-machine --> terraform). Provided as-is. 
 ```shell
