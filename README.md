@@ -2,22 +2,37 @@
 This repo provides an example to create the necessary azure infrastructure for deployment of epods. This is presently a wip and not complete. Provided as-is, only for demo/training purposes.
 
 ## Prerequisites
-The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a bastion machine on azure first, after which we will be able to provision the infrastructure and install epods from the bastion machine. We do this because the bastion machine on the azure cloud will have more stable internet, and would be less dependent on local network. 
+The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a jumpbox machine on azure first, after which we will be able to provision the infrastructure and install epods from the jumpbox machine. We do this because the jumpbox machine on the azure cloud will have more stable internet, and would be less dependent on local network. 
 
-NOTE: These are mac instructions (homebrew --> azure cli --> bastion-machine --> terraform). Provided as-is. 
+NOTE: These are mac instructions (homebrew --> azure cli --> jumpbox-machine --> terraform). Provided as-is. 
 ```shell
 #install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+## install terraform
+brew install terraform
 ## install az cli
 brew install azure-cli
 $> az login
-$> az vm create --resource-group your-resource-group --name epod-training-bastion-$RANDOM --image UbuntuLTS --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4
+## Deploy the jump-box (with azure-cli or use included jumpbox helper script)
+~$> az vm create --resource-group your-resource-group --name epod-training-jumpbox-$RANDOM --image UbuntuLTS --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4~
 ## login to the vm with ssh to run install terraform and provision the epod.
-## ssh azureuser@[vm-ip-address]
+## ssh azuser@[jumpbox-hostname]
+## clean-up with tfda command
+```
+
+Alternatively, to use the jumpbox helper script to provision the jumpbox:
+```shell
+$> git clone https://github.com/amitgupta7/azure-tf-epod.git
+$> source tfAlias
+$> cd azure-tf-epod/jumpbox
+$> tf init
+$> tfaa -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=5tgb%TGB6yhn^YHN"
+## clean-up
+$> tfda -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=5tgb%TGB6yhn^YHN"
 ```
 
 ## To use the tfscript
-Clone `main` branch on the bastion machine. Alternatively use [released packages](https://github.com/amitgupta7/azure-tf-vms/releases)
+Clone `main` branch on the jumpbox machine. And install terraform and azure-cli before running the epod infrastructure provisioning with `terraform apply -auto-approve`.
 ```shell
 ## Install Terraform and azure-cli
 $> sudo snap install terraform --classic
