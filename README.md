@@ -11,7 +11,7 @@ NOTE: These are mac instructions (homebrew --> azure cli --> bastion-machine -->
 ## install az cli
 brew install azure-cli
 $> az login
-$> az vm create --resource-group your-resource-group --name epod-training-bastion-$RANDOM --image Canonical:UbuntuServer:18.04-DAILY-LTS:18.04.202209160 --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4
+$> az vm create --resource-group your-resource-group --name epod-training-bastion-$RANDOM --image UbuntuLTS --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4
 ## login to the vm with ssh to run install terraform and provision the epod.
 ## ssh azureuser@[vm-ip-address]
 ```
