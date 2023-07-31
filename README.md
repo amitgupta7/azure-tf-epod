@@ -30,9 +30,18 @@ az_name_prefix     = "unique-prefix-to-use-in-resource-names"
 ```
 
 ##  Connecting to AKS
-Kubectl should be connected to aks (done using file provisioner). SSH into the jumpbox, and run the following commands.
+Kubectl should be connected to aks (done using file provisioner). SSH into the jumpbox, and run the following commands. Also, installer is available in `/mnt/epod-installer.tar`. Please see `todo.md` for existing limiatation. 
+
 ```shell
 $> kubectl get nodes
 NAME                             STATUS   ROLES   AGE   VERSION
 aks-system-25983833-vmss000000   Ready    agent   22m   v1.24.10
+$> ls -larth /mnt
+total 17G
+dr-xr-xr-x. 17 root root  224 Jun  9  2022 ..
+drwx------.  2 root root  16K Jul 31 18:30 lost+found
+-rw-r--r--.  1 root root  366 Jul 31 18:30 DATALOSS_WARNING_README.txt
+drwxr-xr-x.  3 root root 4.0K Jul 31 18:48 .
+-rw-r--r--.  1 root root 17G Jul 31 19:09 epod-installer.tar
+
 ```
