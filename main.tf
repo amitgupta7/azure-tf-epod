@@ -97,30 +97,30 @@ resource "azurerm_linux_virtual_machine" "jumpbox-vm" {
 
 }
 
-# resource "null_resource" "install_dependencies" {
-#   triggers = {
-#     build_number = "${timestamp()}"
-#   }
+resource "null_resource" "install_dependencies" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
 
-#   depends_on = [azurerm_linux_virtual_machine.jumpbox-vm]
-#   connection {
-#     type     = "ssh"
-#     user     = var.azuser
-#     password = var.azpwd
-#     host     = azurerm_public_ip.pod_ip.fqdn
-#   }
+  depends_on = [azurerm_linux_virtual_machine.jumpbox-vm]
+  connection {
+    type     = "ssh"
+    user     = var.azuser
+    password = var.azpwd
+    host     = azurerm_public_ip.pod_ip.fqdn
+  }
 
-#   provisioner "file" {
-#     source = "install_dependencies.sh"
-#     destination = "/home/${var.azuser}/install_dependencies.sh"
-#   }
+  provisioner "file" {
+    source = "install_dependencies.sh"
+    destination = "/home/${var.azuser}/install_dependencies.sh"
+  }
 
-#   provisioner "remote-exec" {
-#     inline = [
-#       "sudo sh /home/${var.azuser}/install_dependencies.sh"
-#      ]
-#   }
-# }
+  provisioner "remote-exec" {
+    inline = [
+      "sudo sh /home/${var.azuser}/install_dependencies.sh"
+     ]
+  }
+}
 
 resource "null_resource" "post_provisioning" {
   triggers = {
@@ -165,7 +165,7 @@ resource "null_resource" "post_provisioning" {
   provisioner "remote-exec" {
     
     inline = [
-      "mkdir /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config"
+      "mkdir -p /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config"
      ]
   }
 }
