@@ -72,8 +72,7 @@ resource "azurerm_network_interface_security_group_association" "nsg" {
   network_security_group_id = azurerm_network_security_group.pod_sg.id
 }
 
-
-resource "azurerm_linux_virtual_machine" "podvms" {
+resource "azurerm_linux_virtual_machine" "jumpbox-vm" {
   name                  = "${var.az_name_prefix}-jumpbox-vm"
   network_interface_ids = [azurerm_network_interface.pod_nic.id]
   //variables
@@ -84,7 +83,7 @@ resource "azurerm_linux_virtual_machine" "podvms" {
     name                 = "${var.az_name_prefix}-os-disk"
     disk_size_gb         = var.os_disk_size_in_gb
     caching              = "ReadWrite"
-    storage_account_type = "Standard_LRS"
+    storage_account_type = "Premium_LRS"
   }
   source_image_reference {
     publisher = var.os_publisher
@@ -98,37 +97,37 @@ resource "azurerm_linux_virtual_machine" "podvms" {
 
 }
 
-resource "null_resource" "install_dependencies" {
-  triggers = {
-    build_number = "${timestamp()}"
-  }
+# resource "null_resource" "install_dependencies" {
+#   triggers = {
+#     build_number = "${timestamp()}"
+#   }
 
-  depends_on = [azurerm_linux_virtual_machine.podvms]
-  connection {
-    type     = "ssh"
-    user     = var.azuser
-    password = var.azpwd
-    host     = azurerm_public_ip.pod_ip.fqdn
-  }
+#   depends_on = [azurerm_linux_virtual_machine.jumpbox-vm]
+#   connection {
+#     type     = "ssh"
+#     user     = var.azuser
+#     password = var.azpwd
+#     host     = azurerm_public_ip.pod_ip.fqdn
+#   }
 
-  provisioner "file" {
-    source = "install_dependencies.sh"
-    destination = "/home/${var.azuser}/install_dependencies.sh"
-  }
+#   provisioner "file" {
+#     source = "install_dependencies.sh"
+#     destination = "/home/${var.azuser}/install_dependencies.sh"
+#   }
 
-  provisioner "remote-exec" {
-    inline = [
-      "sudo sh /home/${var.azuser}/install_dependencies.sh"
-     ]
-  }
-}
+#   provisioner "remote-exec" {
+#     inline = [
+#       "sudo sh /home/${var.azuser}/install_dependencies.sh"
+#      ]
+#   }
+# }
 
 resource "null_resource" "post_provisioning" {
   triggers = {
     build_number = "${timestamp()}"
   }
 
-  depends_on = [azurerm_linux_virtual_machine.podvms, azurerm_kubernetes_cluster.aks, azurerm_container_registry.acr1]
+  depends_on = [azurerm_linux_virtual_machine.jumpbox-vm, azurerm_kubernetes_cluster.aks, azurerm_container_registry.acr1]
   connection {
     type     = "ssh"
     user     = var.azuser
@@ -151,15 +150,22 @@ resource "null_resource" "post_provisioning" {
     destination = "/home/${var.azuser}/epod.properties"
   }
 
-  # provisioner "file" {
-  #   source = "install_edss.sh"
-  #   destination = "/home/${var.azuser}/install_edss.sh"
-  # }
+  provisioner "file" {
+    source = "download_installer.sh"
+    destination = "/home/${var.azuser}/download_installer.sh"
+  }
 
   provisioner "remote-exec" {
+    ## to-do: need to mount a larger partition to / (tmp downlaod to /mnt/ due to limitations of azure RHEL provisioning)
     inline = [
-      "mkdir ~/.kube",
-      "mv ~/.kube_config /.kube/config"
+      "sudo sh /home/${var.azuser}/download_installer.sh -s ${var.X_API_Secret} -k ${var.X_API_Key} -t ${var.X_TIDENT} -o /mnt/epod-installer.tar"
+     ]
+  }
+
+  provisioner "remote-exec" {
+    
+    inline = [
+      "mkdir /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config"
      ]
   }
 }

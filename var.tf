@@ -12,7 +12,7 @@ variable "vm_size" {
 }
 
 variable "os_disk_size_in_gb" {
-  default = 512
+  default = 1024
 }
 
 
