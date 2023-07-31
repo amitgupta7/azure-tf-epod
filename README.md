@@ -22,11 +22,15 @@ $> tfda
 ```
 
 
-Create a `terraform.tfvars` file to proivide azure subscription id and existing resource group. And/Or override default cidr values for infra provisioning. e.g.
+Create a `terraform.tfvars` file to proivide azure subscription id, existing resource group And/Or other inputs to the script. See `var.tf` file for more details. e.g.
 ```hcl
 az_subscription_id = "your-azure-subscription-id"
 az_resource_group  = "existing-resource-group-in-azure"
 az_name_prefix     = "unique-prefix-to-use-in-resource-names"
+X_API_Secret       = "sai api secret"
+X_API_Key          = "sai api key"
+X_TIDENT           = "sai api tenant"
+azpwd              = "some secure password atleast 16 char 3-outof-4 of alpha-num-caps-special"
 ```
 
 ##  Connecting to AKS
