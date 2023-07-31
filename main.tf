@@ -156,16 +156,15 @@ resource "null_resource" "post_provisioning" {
   }
 
   provisioner "remote-exec" {
-    ## to-do: need to mount a larger partition to / (tmp downlaod to /mnt/ due to limitations of azure RHEL provisioning)
     inline = [
-      "sudo sh /home/${var.azuser}/download_installer.sh -s ${var.X_API_Secret} -k ${var.X_API_Key} -t ${var.X_TIDENT} -o /mnt/epod-installer.tar"
+      "mkdir -p /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config"
      ]
   }
 
   provisioner "remote-exec" {
-    
+    ## to-do: need to mount a larger partition to / (tmp downlaod to /mnt/ due to limitations of azure RHEL provisioning)
     inline = [
-      "mkdir -p /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config"
+      "sudo sh /home/${var.azuser}/download_installer.sh -s ${var.X_API_Secret} -k ${var.X_API_Key} -t ${var.X_TIDENT} -o /mnt/epod-installer.tar"
      ]
   }
 }
