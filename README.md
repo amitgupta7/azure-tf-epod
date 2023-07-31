@@ -13,11 +13,43 @@ brew install terraform
 ## install az cli
 brew install azure-cli
 $> az login
+## Deploy the jump-box (with azure-cli or use included jumpbox helper script)
+~$> az vm create --resource-group your-resource-group --name epod-training-jumpbox-$RANDOM --image UbuntuLTS --admin-username "azureuser" --admin-password "5tgb%TGB6yhn^YHN" --os-disk-size-gb 512 --size Standard_D2ds_v4~
+## login to the vm with ssh to run install terraform and provision the epod.
+## ssh azuser@[jumpbox-hostname]
+## clean-up with tfda command
+```
+
+Alternatively, to use the jumpbox helper script to provision the jumpbox:
+```shell
 $> git clone https://github.com/amitgupta7/azure-tf-epod.git
 $> source tfAlias
 $> tf init
-$> tfaa
+$> tfaa -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=5tgb%TGB6yhn^YHN"
 ## clean-up
+$> tfda -var="az_subscription_id=your-azure-subscription-id" -var="az_resource_group=existing-azure-resourcegroup" -var="azpwd=5tgb%TGB6yhn^YHN"
+```
+
+## To use the tfscript
+Clone `main` branch on the jumpbox machine. And install terraform and azure-cli before running the epod infrastructure provisioning with `terraform apply -auto-approve`.
+```shell
+## Install Terraform and azure-cli
+$> sudo snap install terraform --classic
+$> sudo apt-get update
+$> sudo apt-get install -y libssl-dev libffi-dev python3-dev build-essential
+$> curl -L https://aka.ms/InstallAzureCli | bash
+$> az login
+## Get this script to provision the infrastruture
+$> git clone https://github.com/amitgupta7/azure-tf-epod.git
+$> cd azure-tf-epod
+$> source tfAlias
+$> tf init 
+## provision infra for pods provide EXISTING resource group name,
+## provide azure subscription-id and az-name-prefix on prompt.
+$> tfaa 
+## to de-provision provide EXISTING resource group name, 
+## azure subscription-id and az-name-prefix on prompt 
+## EXACTLY SAME VALUES AS PROVIDED DURING PROVISIONING
 $> tfda
 ```
 
