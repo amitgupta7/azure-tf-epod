@@ -96,13 +96,6 @@ resource "azurerm_linux_virtual_machine" "podvms" {
   admin_password                  = var.azpwd
   disable_password_authentication = false
 
-  # provisioner "local-exec" {
-  #  command = <<-EOF
-  #    exec "sh /home/${var.azuser}/install/install_dependencies.sh| tee /home/${var.azuser}/install/install_dependency.out"
-  #  EOF
-  # }
-
-  # depends_on = [ azurerm_container_registry.acr1, azurerm_kubernetes_cluster.aks ]
 }
 
 resource "null_resource" "install_dependencies" {
@@ -149,11 +142,12 @@ resource "null_resource" "post_provisioning" {
 
   provisioner "file" {
     source = "config.aks"
-    destination = "/home/${var.azuser}/.kube/config"
+    destination = "/home/${var.azuser}/.kube_config"
+    
   }
 
   provisioner "file" {
-    content = "ACR_LOGIN: ${azurerm_container_registry.acr1.login_server}\nACR_PASSWORD: ${azurerm_container_registry.acr1.admin_password}\nACR_USERNAME: ${azurerm_container_registry.acr1.admin_username}\nAKS_NAME: ${azurerm_kubernetes_cluster.aks.name}"
+    content = "ACR_LOGIN=${azurerm_container_registry.acr1.login_server}\nACR_PASSWORD=${azurerm_container_registry.acr1.admin_password}\nACR_USERNAME=${azurerm_container_registry.acr1.admin_username}\nACR_PREFIX=${azurerm_container_registry.acr1.name}\nAKS_NAME=${azurerm_kubernetes_cluster.aks.name}"
     destination = "/home/${var.azuser}/epod.properties"
   }
 
@@ -162,11 +156,12 @@ resource "null_resource" "post_provisioning" {
   #   destination = "/home/${var.azuser}/install_edss.sh"
   # }
 
-  # provisioner "remote-exec" {
-  #   inline = [
-  #     "sudo sh /home/${var.azuser}/install_edss.sh"
-  #    ]
-  # }
+  provisioner "remote-exec" {
+    inline = [
+      "mkdir ~/.kube",
+      "mv ~/.kube_config /.kube/config"
+     ]
+  }
 }
 
 
