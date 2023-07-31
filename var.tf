@@ -8,24 +8,24 @@ variable "region" {
 }
 
 variable "vm_size" {
-  default = "Standard_D32s_v3"
+  default = "Standard_D8s_v3"
 }
 
 variable "os_disk_size_in_gb" {
-  default = 1024
+  default = 512
 }
 
 
 variable "os_publisher" {
-  default = "Canonical"
+  default = "RedHat"
 }
 
 variable "os_offer" {
-  default = "0001-com-ubuntu-server-focal"
+  default = "RHEL"
 }
 
 variable "os_sku" {
-  default = "20_04-lts-gen2"
+  default = "8_5"
 }
 
 variable "os_version" {
@@ -75,18 +75,30 @@ variable "max_node_count" {
   description = "AKS max nodes"
 }
 
-variable "address_space" {
-  default = ["192.168.1.0/24"]
+# variable "address_space" {
+#   default = ["192.168.1.0/24"]
+# }
+
+# variable "bastion_address_prefix" {
+#   default = ["192.168.1.224/27"]
+# }
+
+# variable "service_subnet_address_prefixes" {
+#   default = ["192.168.1.0/28"]
+# }
+
+# variable "endpoint_subnet_address_prefixes" {
+#   default = ["192.168.1.16/28"]
+# }
+
+variable "output_file" {
+  default = ".terraform.output"
 }
 
-variable "bastion_address_prefix" {
-  default = ["192.168.1.224/27"]
+variable "azpwd" {
+  description = "common vm password, 16 characters containg --> [chars-alpha-num-special-char]"
 }
 
-variable "service_subnet_address_prefixes" {
-  default = ["192.168.1.0/28"]
-}
-
-variable "endpoint_subnet_address_prefixes" {
-  default = ["192.168.1.16/28"]
+variable "azuser" {
+  default = "azuser"
 }

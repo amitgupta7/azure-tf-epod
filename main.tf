@@ -13,80 +13,170 @@ provider "azurerm" {
   subscription_id            = var.az_subscription_id
   skip_provider_registration = true
 }
-#resource_group_name = var.az_resource_group
 
 resource "azurerm_virtual_network" "vnet" {
   name                = "${var.az_name_prefix}-vnet"
-  address_space       = var.address_space
+  address_space       = ["10.0.0.0/16"]
   location            = var.region
   resource_group_name = var.az_resource_group
 }
 
-resource "azurerm_network_security_group" "nsg" {
-  name                = "${var.az_name_prefix}-nsg"
-  location            = var.region
-  resource_group_name = var.az_resource_group
-}
-
-resource "azurerm_subnet" "bastion-subnet" {
-  name                 = "AzureBastionSubnet"
-  resource_group_name  = var.az_resource_group
+resource "azurerm_subnet" "subnet" {
+  name                 = "${var.az_name_prefix}_pod-subnet"
   virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = var.bastion_address_prefix
-}
-
-resource "azurerm_subnet" "service-subnet" {
-  name                = "${var.az_name_prefix}-epod-subnet"
   resource_group_name  = var.az_resource_group
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = var.service_subnet_address_prefixes
-
-  enforce_private_link_service_network_policies = true
+  address_prefixes     = ["10.0.2.0/24"]
 }
 
-resource "azurerm_subnet" "endpoint-subnet" {
-  name                = "${var.az_name_prefix}-endpoint-subnet"
-  resource_group_name  = var.az_resource_group
-  virtual_network_name = azurerm_virtual_network.vnet.name
-  address_prefixes     = var.endpoint_subnet_address_prefixes
-
-  enforce_private_link_endpoint_network_policies = true
-}
-
-resource "azurerm_public_ip" "epod-public-ip" {
-  name                = "${var.az_name_prefix}-epod-publicip"
-  sku                 = "Standard"
-  location            = var.region
-  resource_group_name = var.az_resource_group
-  allocation_method   = "Static"
-}
-
-resource "azurerm_public_ip" "bastion-public-ip" {
-  name                = "${var.az_name_prefix}-bastion-publicip"
-  location            = var.region
-  resource_group_name = var.az_resource_group
-  allocation_method   = "Static"
-  sku                 = "Standard"
-}
-
-resource "azurerm_bastion_host" "bastion-host" {
-  name                = "${var.az_name_prefix}-bastion-host"
+resource "azurerm_network_security_group" "pod_sg" {
+  name                = "${var.az_name_prefix}_pods-sg"
   location            = var.region
   resource_group_name = var.az_resource_group
 
-  ip_configuration {
-    name                 = "configuration"
-    subnet_id            = azurerm_subnet.bastion-subnet.id
-    public_ip_address_id = azurerm_public_ip.bastion-public-ip.id
+  security_rule {
+    name                       = "SSH"
+    priority                   = 101
+    direction                  = "Inbound"
+    access                     = "Allow"
+    protocol                   = "Tcp"
+    source_port_range          = "*"
+    destination_port_range     = "22"
+    source_address_prefix      = "*"
+    destination_address_prefix = "*"
   }
 }
+
+resource "azurerm_public_ip" "pod_ip" {
+  name                = "${var.az_name_prefix}_jumpbox_ip"
+  location            = var.region
+  resource_group_name = var.az_resource_group
+  allocation_method   = "Dynamic"
+  domain_name_label   = "${var.az_name_prefix}-jumpbox"
+}
+
+resource "azurerm_network_interface" "pod_nic" {
+  name                = "${var.az_name_prefix}_jumpbox_nic"
+  location            = var.region
+  resource_group_name = var.az_resource_group
+  ip_configuration {
+    name                          = "${var.az_name_prefix}_jumpbox_ipconfig"
+    subnet_id                     = azurerm_subnet.subnet.id
+    private_ip_address_allocation = "Static"
+    private_ip_address            = "10.0.2.21"
+    public_ip_address_id          = azurerm_public_ip.pod_ip.id
+  }
+}
+
+resource "azurerm_network_interface_security_group_association" "nsg" {
+  network_interface_id      = azurerm_network_interface.pod_nic.id
+  network_security_group_id = azurerm_network_security_group.pod_sg.id
+}
+
+
+resource "azurerm_linux_virtual_machine" "podvms" {
+  name                  = "${var.az_name_prefix}-jumpbox-vm"
+  network_interface_ids = [azurerm_network_interface.pod_nic.id]
+  //variables
+  location            = var.region
+  resource_group_name = var.az_resource_group
+  size                = var.vm_size
+  os_disk {
+    name                 = "${var.az_name_prefix}-os-disk"
+    disk_size_gb         = var.os_disk_size_in_gb
+    caching              = "ReadWrite"
+    storage_account_type = "Standard_LRS"
+  }
+  source_image_reference {
+    publisher = var.os_publisher
+    offer     = var.os_offer
+    sku       = var.os_sku
+    version   = var.os_version
+  }
+  admin_username                  = var.azuser
+  admin_password                  = var.azpwd
+  disable_password_authentication = false
+
+  # provisioner "local-exec" {
+  #  command = <<-EOF
+  #    exec "sh /home/${var.azuser}/install/install_dependencies.sh| tee /home/${var.azuser}/install/install_dependency.out"
+  #  EOF
+  # }
+
+  # depends_on = [ azurerm_container_registry.acr1, azurerm_kubernetes_cluster.aks ]
+}
+
+resource "null_resource" "install_dependencies" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
+
+  depends_on = [azurerm_linux_virtual_machine.podvms]
+  connection {
+    type     = "ssh"
+    user     = var.azuser
+    password = var.azpwd
+    host     = azurerm_public_ip.pod_ip.fqdn
+  }
+
+  provisioner "file" {
+    source = "install_dependencies.sh"
+    destination = "/home/${var.azuser}/install_dependencies.sh"
+  }
+
+  provisioner "remote-exec" {
+    inline = [
+      "sudo sh /home/${var.azuser}/install_dependencies.sh"
+     ]
+  }
+}
+
+resource "null_resource" "post_provisioning" {
+  triggers = {
+    build_number = "${timestamp()}"
+  }
+
+  depends_on = [azurerm_linux_virtual_machine.podvms, azurerm_kubernetes_cluster.aks, azurerm_container_registry.acr1]
+  connection {
+    type     = "ssh"
+    user     = var.azuser
+    password = var.azpwd
+    host     = azurerm_public_ip.pod_ip.fqdn
+  }
+
+  provisioner "local-exec" {
+  command = "az aks get-credentials --resource-group ${var.az_resource_group} --name ${azurerm_kubernetes_cluster.aks.name} --file config.aks --overwrite-existing"
+}
+
+  provisioner "file" {
+    source = "config.aks"
+    destination = "/home/${var.azuser}/.kube/config"
+  }
+
+  provisioner "file" {
+    content = "ACR_LOGIN: ${azurerm_container_registry.acr1.login_server}\nACR_PASSWORD: ${azurerm_container_registry.acr1.admin_password}\nACR_USERNAME: ${azurerm_container_registry.acr1.admin_username}\nAKS_NAME: ${azurerm_kubernetes_cluster.aks.name}"
+    destination = "/home/${var.azuser}/epod.properties"
+  }
+
+  # provisioner "file" {
+  #   source = "install_edss.sh"
+  #   destination = "/home/${var.azuser}/install_edss.sh"
+  # }
+
+  # provisioner "remote-exec" {
+  #   inline = [
+  #     "sudo sh /home/${var.azuser}/install_edss.sh"
+  #    ]
+  # }
+}
+
 
 resource "azurerm_container_registry" "acr1" {
   name                = replace("${var.az_name_prefix}-acr", "-", "")
   resource_group_name = var.az_resource_group
   location            = var.region
   sku                 = "Premium"
-  admin_enabled       = false
+  admin_enabled       = true
+
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
@@ -115,109 +205,18 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 }
 
-resource "azurerm_redis_cache" "redis" {
-  name                = "${var.az_name_prefix}-redis"
-  location            = var.region
-  resource_group_name = var.az_resource_group
-  capacity            = 2
-  family              = "P"
-  sku_name            = "Premium"
-  enable_non_ssl_port = true
-  minimum_tls_version = "1.2"
-
-  redis_configuration {
-  }
-
-  zones = ["1", "2"]
+output "hostname" {
+  value = azurerm_public_ip.pod_ip.fqdn
 }
 
-resource "azurerm_storage_account" "storage_acc" {
-  name                     = substr(replace("${var.az_name_prefix}-storage-acc", "-", ""), 0,24)
-  resource_group_name      = var.az_resource_group
-  location                 = var.region
-  account_tier             = "Standard"
-  account_replication_type = "LRS"
+output "az_subscription_id" {
+  value = var.az_subscription_id
 }
 
-resource "azurerm_storage_container" "example" {
-  name                  = "${var.az_name_prefix}-storage-container"
-  storage_account_name  = azurerm_storage_account.storage_acc.name
-  container_access_type = "private"
+output "az_resource_group" {
+  value = var.az_resource_group
 }
 
-resource "azurerm_storage_queue" "example" {
-  name                 = "${var.az_name_prefix}-storage-container-queue"
-  storage_account_name = azurerm_storage_account.storage_acc.name
-}
-
-## Create Private Link to connect epods to Redis and Storage
-resource "azurerm_lb" "epod-loadbalancer" {
-  name                = "${var.az_name_prefix}-epod-loadbalancer"
-  sku                 = "Standard"
-  location            = var.region
-  resource_group_name      = var.az_resource_group
-
-  frontend_ip_configuration {
-    name                 = azurerm_public_ip.epod-public-ip.name
-    public_ip_address_id = azurerm_public_ip.epod-public-ip.id
-  }
-}
-
-resource "azurerm_private_link_service" "privatelink-service" {
-  name                = "${var.az_name_prefix}-privatelink-service"
-  location            = var.region
-  resource_group_name      = var.az_resource_group
-  nat_ip_configuration {
-    name      = azurerm_public_ip.epod-public-ip.name
-    primary   = true
-    subnet_id = azurerm_subnet.service-subnet.id
-  }
-
-  load_balancer_frontend_ip_configuration_ids = [
-    azurerm_lb.epod-loadbalancer.frontend_ip_configuration.0.id,
-  ]
-}
-
-resource "azurerm_private_endpoint" "privat-endpoint" {
-  name                = "${var.az_name_prefix}-priv-endpoint"
-  location            = var.region
-  resource_group_name      = var.az_resource_group
-  subnet_id           = azurerm_subnet.endpoint-subnet.id
-
-  private_service_connection {
-    name                           = "${var.az_name_prefix}-privateserviceconnection"
-    private_connection_resource_id = azurerm_private_link_service.privatelink-service.id
-    is_manual_connection           = false
-  }
-}
-
-
-output "redis_host_ip" {
-  value = azurerm_redis_cache.redis.hostname
-}
-
-output "redis_primary_access_key" {
- value     = azurerm_redis_cache.redis.primary_access_key
- sensitive = true
-}
-
-output "repository_host" {
-  value = azurerm_container_registry.acr1.login_server
-}
-
-output "repository_pwd" {
-  value = azurerm_container_registry.acr1.admin_password
-  sensitive = true
-}
-
-output "repository_usr" {
-  value = azurerm_container_registry.acr1.admin_username
-}
-
-output "repository_id" {
-  value = azurerm_container_registry.acr1.name
-}
-
-output "aks_cluster_name" {
-  value = azurerm_kubernetes_cluster.aks.name
+output "ssh_credentials" {
+  value = "${var.azuser}/${var.azpwd}"
 }
