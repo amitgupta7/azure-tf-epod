@@ -42,7 +42,7 @@ ssh -L 8800:localhost:8800 azuser@azure-tf-epod1-amit-jumpbox.westus2.cloudapp.a
 with password: <your_super_secure_password>
 EOT
 ```
-Also not down the appliance-id that the pod has been registered to on the SAI portal `null_resource.post_provisioning (remote-exec): Registered to appliance id: 4b2ed592-1aaa-45b7-ade2-5ff91bc36fbf`
+Also note down the appliance-id that the pod has been registered to on the SAI portal `null_resource.post_provisioning (remote-exec): Registered to appliance id: 4b2ed592-1aaa-45b7-ade2-5ff91bc36fbf`
 
 ##  Connecting to AKS
 Kubectl should be connected to aks and pod installed (done using file provisioner). SSH into the jumpbox, and run the following commands.
