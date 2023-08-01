@@ -165,7 +165,7 @@ resource "null_resource" "post_provisioning" {
   provisioner "remote-exec" {
     ## to-do: need to mount a larger partition to / (tmp downlaod to /mnt/ due to limitations of azure RHEL provisioning)
     inline = [
-      "sh /home/${var.azuser}/online_kots_installer.sh -h ${azurerm_redis_cache.redis.hostname} -p $(cat /home/${var.azuser}/redis_key.txt) -r ${var.region}"
+      "sh /home/${var.azuser}/online_kots_installer.sh -h ${azurerm_redis_cache.redis.hostname} -p $(cat /home/${var.azuser}/redis_key.txt) -r ${var.region} -k ${var.X_API_Key} -s ${var.X_API_Secret} -t ${var.X_TIDENT}",
      ]
   }
 }
