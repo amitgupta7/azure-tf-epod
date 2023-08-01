@@ -66,7 +66,7 @@ variable "node_vm_size" {
 }
 
 variable "min_node_count" {
-  default     = "1"
+  default     = "2"
   description = "AKS min nodes"
 }
 

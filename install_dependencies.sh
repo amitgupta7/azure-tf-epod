@@ -51,3 +51,4 @@ fi
 install_basics
 install_az_cli
 sudo az aks install-cli
+sudo curl https://kots.io/install | bash

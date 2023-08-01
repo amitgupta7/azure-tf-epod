@@ -127,7 +127,7 @@ resource "null_resource" "post_provisioning" {
     build_number = "${timestamp()}"
   }
 
-  depends_on = [azurerm_linux_virtual_machine.jumpbox-vm, azurerm_kubernetes_cluster.aks, azurerm_container_registry.acr1]
+  depends_on = [azurerm_linux_virtual_machine.jumpbox-vm, azurerm_kubernetes_cluster.aks, azurerm_redis_cache.redis, null_resource.install_dependencies]
   connection {
     type     = "ssh"
     user     = var.azuser
@@ -146,37 +146,44 @@ resource "null_resource" "post_provisioning" {
   }
 
   provisioner "file" {
-    content = "ACR_LOGIN=${azurerm_container_registry.acr1.login_server}\nACR_PASSWORD=${azurerm_container_registry.acr1.admin_password}\nACR_USERNAME=${azurerm_container_registry.acr1.admin_username}\nACR_PREFIX=${azurerm_container_registry.acr1.name}\nAKS_NAME=${azurerm_kubernetes_cluster.aks.name}"
-    destination = "/home/${var.azuser}/epod.properties"
+    source = "online_kots_installer.sh"
+    destination = "/home/${var.azuser}/online_kots_installer.sh"
   }
 
-  provisioner "file" {
-    source = "download_installer.sh"
-    destination = "/home/${var.azuser}/download_installer.sh"
+    provisioner "file" {
+    source = "license.yaml"
+    destination = "/home/${var.azuser}/license.yaml"
   }
 
   provisioner "remote-exec" {
     inline = [
-      "mkdir -p /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config"
+      "mkdir -p /home/${var.azuser}/.kube && mv /home/${var.azuser}/.kube_config /home/${var.azuser}/.kube/config",
+      "echo ${azurerm_redis_cache.redis.primary_access_key} > /home/${var.azuser}/redis_key.txt",
      ]
   }
 
   provisioner "remote-exec" {
     ## to-do: need to mount a larger partition to / (tmp downlaod to /mnt/ due to limitations of azure RHEL provisioning)
     inline = [
-      "sudo sh /home/${var.azuser}/download_installer.sh -s ${var.X_API_Secret} -k ${var.X_API_Key} -t ${var.X_TIDENT} -o /mnt/epod-installer.tar"
+      "sh /home/${var.azuser}/online_kots_installer.sh -h ${azurerm_redis_cache.redis.hostname} -p $(cat /home/${var.azuser}/redis_key.txt) -r ${var.region}"
      ]
   }
 }
 
-
-resource "azurerm_container_registry" "acr1" {
-  name                = replace("${var.az_name_prefix}-acr", "-", "")
-  resource_group_name = var.az_resource_group
+resource "azurerm_redis_cache" "redis" {
+  name                = "${var.az_name_prefix}-redis"
   location            = var.region
-  sku                 = "Premium"
-  admin_enabled       = true
+  resource_group_name = var.az_resource_group
+  capacity            = 2
+  family              = "P"
+  sku_name            = "Premium"
+  enable_non_ssl_port = true
+  minimum_tls_version = "1.2"
 
+  redis_configuration {
+  }
+
+  zones = ["1", "2"]
 }
 
 resource "azurerm_kubernetes_cluster" "aks" {
@@ -205,18 +212,6 @@ resource "azurerm_kubernetes_cluster" "aks" {
   }
 }
 
-output "hostname" {
-  value = azurerm_public_ip.pod_ip.fqdn
-}
-
-output "az_subscription_id" {
-  value = var.az_subscription_id
-}
-
-output "az_resource_group" {
-  value = var.az_resource_group
-}
-
 output "ssh_credentials" {
-  value = "${var.azuser}/${var.azpwd}"
+  value = "ssh -L 8800:localhost:8800 ${var.azuser}@${azurerm_public_ip.pod_ip.fqdn} \nwith password: ${var.azpwd}"
 }
