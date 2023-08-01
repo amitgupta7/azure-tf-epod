@@ -4,7 +4,7 @@ This repo provides an example to create the necessary azure infrastructure for d
 ## Prerequisites
 The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a jumpbox machine on azure first to download the installer and perform the install. We will do this because the jumpbox machine on the azure cloud will have more stable internet, and would be less dependent on local network. 
 
-NOTE: These are mac instructions (homebrew --> azure cli --> terraform --> jumpbox-machine, aks, redis kots based install). Provided as-is. 
+NOTE: These are mac instructions (homebrew --> azure cli --> terraform --> jumpbox-machine, aks, redis kots based install). Provided as-is. You will also need a replicated license from securiti.ai to use the OTA installer, please reachout to support or account rep for the same. Rename the kots license as licese.yaml, and place it in the cloned code folder. 
 ```shell
 #install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
