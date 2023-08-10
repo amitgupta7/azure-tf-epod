@@ -37,6 +37,14 @@ CONFIGVALS
 kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n securiti --shared-password "securitiscanner" >install.log 2>&1 &
 sleep 20m
 
+CONFIG_CTRL_POD=$(kubectl get pods -l app=priv-appliance-config-controller -n "securiti" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+if [ -z "$CONFIG_CTRL_POD"]
+then
+  kubectl get pods -A
+  echo "Config controller pod not found, please check the deployment"
+  exit 1
+fi
+
 
 curl -s -X 'POST' \
   'https://app.securiti.ai/core/v1/admin/appliance' \
@@ -55,7 +63,6 @@ curl -s -X 'POST' \
 
 SAI_LICENSE=$(cat sai_appliance.txt| jq -r '.data.license')
 # get the pod name for the config controller pod, we'll need this for registration
-CONFIG_CTRL_POD=$(kubectl get pods -l app=priv-appliance-config-controller -n "securiti" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
 
 # register with Securiti Cloud
 kubectl exec -it "$CONFIG_CTRL_POD" -n "securiti" -- securitictl register -l "$SAI_LICENSE"
