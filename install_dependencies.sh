@@ -24,6 +24,44 @@ install_bin() {
     cp --force "$bin_name" "$BASE/bin/$bin_name"
 }
 
+setup_helm() {
+    mkdir -p "$BASE/tmp"
+    cd "$BASE/tmp"
+    # download helm
+    curl -fsSL -o "helm-v3.6.0-linux-amd64.tar.gz" "https://get.helm.sh/helm-v3.6.0-linux-amd64.tar.gz"
+    # extract helm/tiller
+    tar -xzf "helm-v3.6.0-linux-amd64.tar.gz"
+    # move helm into path
+    cp --force linux-amd64/helm helm
+    install_bin "helm"
+    # remove temporary directory
+    cd "$BASE"
+    rm -rf "$BASE/tmp"
+    # make directory for storing state files
+    mkdir -p "$BASE/state"
+    # creates YAML for service account
+    cat <<'EOF' >"$BASE/state/sa-tiller.yaml"
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: tiller
+  namespace: kube-system
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: tiller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+  - kind: ServiceAccount
+    name: tiller
+    namespace: kube-system
+EOF
+}
+
 install_az_cli() {
     mkdir -p "$BASE/tmp"
     cd "$BASE/tmp"
@@ -52,3 +90,4 @@ install_basics
 install_az_cli
 sudo az aks install-cli
 sudo curl https://kots.io/install | bash
+setup_helm

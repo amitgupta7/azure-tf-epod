@@ -1,15 +1,21 @@
 #!/bin/bash
-while getopts h:p:r:k:s:t: flag
+while getopts r:k:s:t: flag
 do
     case "${flag}" in
-        h) host=${OPTARG};;
-        p) password=${OPTARG};;
         r) region=${OPTARG};;
         k) apikey=${OPTARG};;
         s) apisecret=${OPTARG};;
         t) apitenant=${OPTARG};;        
     esac
 done
+
+REDIS_DEPLOYMENT_NAME=epod-ec
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update  
+helm install $REDIS_DEPLOYMENT_NAME bitnami/redis
+host=$REDIS_DEPLOYMENT_NAME-redis-master.default.svc.cluster.local
+password=$(kubectl get secret --namespace default $REDIS_DEPLOYMENT_NAME-redis -o jsonpath="{.data.redis-password}" | base64 -d)
+
 
 cat <<CONFIGVALS >values.yaml
 apiVersion: kots.io/v1beta1

@@ -75,22 +75,6 @@ variable "max_node_count" {
   description = "AKS max nodes"
 }
 
-# variable "address_space" {
-#   default = ["192.168.1.0/24"]
-# }
-
-# variable "bastion_address_prefix" {
-#   default = ["192.168.1.224/27"]
-# }
-
-# variable "service_subnet_address_prefixes" {
-#   default = ["192.168.1.0/28"]
-# }
-
-# variable "endpoint_subnet_address_prefixes" {
-#   default = ["192.168.1.16/28"]
-# }
-
 variable "output_file" {
   default = ".terraform.output"
 }
