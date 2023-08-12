@@ -1,4 +1,5 @@
 #!/bin/bash
+set -v
 while getopts r:k:s:t: flag
 do
     case "${flag}" in
@@ -8,14 +9,25 @@ do
         t) apitenant=${OPTARG};;        
     esac
 done
+# NAME                    CHART VERSION   APP VERSION 
+# bitnami/elasticsearch   18.2.16         8.2.3    
+# bitnami/postgresql-ha   11.9.13           14.5.0 
+# bitnami/redis           16.13.2         6.2.7 
 
-REDIS_DEPLOYMENT_NAME=epod-ec
+DEPLOYMENT_PREFIX=securiti-epod
+REDIS_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-ec
+POSTGRES_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-pg
+ELASTICSEARCH_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-es
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update  
-helm install $REDIS_DEPLOYMENT_NAME bitnami/redis
-host=$REDIS_DEPLOYMENT_NAME-redis-master.default.svc.cluster.local
-password=$(kubectl get secret --namespace default $REDIS_DEPLOYMENT_NAME-redis -o jsonpath="{.data.redis-password}" | base64 -d)
-
+helm install $REDIS_DEPLOYMENT_NAME bitnami/redis --version "16.13.2"
+helm install $POSTGRES_DEPLOYMENT_NAME bitnami/postgresql --version "11.9.13"
+helm install $ELASTICSEARCH_DEPLOYMENT_NAME bitnami/elasticsearch --version "18.2.16"
+ec_host=$REDIS_DEPLOYMENT_NAME-redis-master.default.svc.cluster.local
+ec_password=$(kubectl get secret --namespace default $REDIS_DEPLOYMENT_NAME-redis -o jsonpath="{.data.redis-password}" | base64 -d)
+pg_password=$(kubectl get secret --namespace default $POSTGRES_DEPLOYMENT_NAME-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+pg_host=$POSTGRES_DEPLOYMENT_NAME-postgresql.default.svc.cluster.local
+es_host=$ELASTICSEARCH_DEPLOYMENT_NAME-elasticsearch.default.svc.cluster.local
 
 cat <<CONFIGVALS >values.yaml
 apiVersion: kots.io/v1beta1
@@ -25,19 +37,25 @@ metadata:
 spec:
   values:
     redis_host:
-        value: "$host"
+        value: "$ec_host"
     redis_password:
-        value: "$password"
+        value: "$ec_password"
     use_redis_ssl:
         value: "0"
     region:
       value: $region
-    deploy_prometheus:
-      value: "1"
-    deploy_metrics:
-      value: "1"
     install_dir:
        value: "/var/lib/"
+    enable_external_postgres:
+        value: "1"
+    postgres_host:
+        value: "$pg_host"
+    postgres_password:
+        value: "$pg_password"
+    enable_external_es:
+        value: "1"
+    es_host:
+        value: "$es_host"
 CONFIGVALS
 
 kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n securiti --shared-password "securitiscanner" >install.log 2>&1 &

@@ -4,7 +4,7 @@ This repo provides an example to create the necessary azure infrastructure for d
 ## Prerequisites
 The script needs terraform and azure cli to run. These can be installed using a packet manager like apt (linux) or using homebrew (mac). We will create a jumpbox machine on azure first to download the installer and perform the install. We will do this because the jumpbox machine on the azure cloud will have more stable internet, and would be less dependent on local network. 
 
-NOTE: These are mac instructions (homebrew --> azure cli --> terraform --> jumpbox-machine, aks, redis kots based install). Provided as-is. You will also need a replicated license from securiti.ai to use the OTA installer, please reachout to support or account rep for the same. Rename the kots license as licese.yaml, and place it in the cloned code folder. 
+NOTE: These are mac instructions (homebrew --> azure cli --> terraform --> jumpbox-machine, aks, redis, kots based install). Provided as-is. You will also need a replicated license from securiti.ai to use the OTA installer, please reachout to support or account rep for the same. Rename the kots license as licese.yaml, and place it in the cloned code folder. 
 ```shell
 #install homebrew
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -43,6 +43,36 @@ with password: <your_super_secure_password>
 EOT
 ```
 Also note down the appliance-id that the pod has been registered to on the SAI portal `null_resource.post_provisioning (remote-exec): Registered to appliance id: 4b2ed592-1aaa-45b7-ade2-5ff91bc36fbf`
+
+## Kubernetes version
+The securiti appliance is sensitive to the kubernetes version on AKS. In case you have errors (either aks supported k8s version in your region, or supported k8s version for securiti appliance), the k8s version can be changed with `kubernetes_version` variable.
+```shell
+tfa -var=kubernetes_version=1.25.6 -var=region=eastus2
+```
+
+## Stateful sets
+It is cheaper to deploy the necessary redis, postgresql and elastic search for the scanning appliance on the AKS cluster itself. The script does this by using bitnami helm charts, and generating and setting paswords during runtime. 
+```shell
+# NAME                    CHART VERSION   APP VERSION 
+# bitnami/elasticsearch   18.2.16         8.2.3    
+# bitnami/postgresql-ha   11.9.13         14.5.0 
+# bitnami/redis           16.13.2         6.2.7 
+
+DEPLOYMENT_PREFIX=securiti-epod
+REDIS_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-ec
+POSTGRES_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-pg
+ELASTICSEARCH_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-es
+helm repo add bitnami https://charts.bitnami.com/bitnami
+helm repo update  
+helm install $REDIS_DEPLOYMENT_NAME bitnami/redis --version "16.13.2"
+helm install $POSTGRES_DEPLOYMENT_NAME bitnami/postgresql --version "11.9.13"
+helm install $ELASTICSEARCH_DEPLOYMENT_NAME bitnami/elasticsearch --version "18.2.16"
+ec_host=$REDIS_DEPLOYMENT_NAME-redis-master.default.svc.cluster.local
+ec_password=$(kubectl get secret --namespace default $REDIS_DEPLOYMENT_NAME-redis -o jsonpath="{.data.redis-password}" | base64 -d)
+pg_password=$(kubectl get secret --namespace default $POSTGRES_DEPLOYMENT_NAME-postgresql -o jsonpath="{.data.postgres-password}" | base64 -d)
+pg_host=$POSTGRES_DEPLOYMENT_NAME-postgresql.default.svc.cluster.local
+es_host=$ELASTICSEARCH_DEPLOYMENT_NAME-elasticsearch.default.svc.cluster.local
+```
 
 ##  Connecting to AKS
 Kubectl should be connected to aks and pod installed (done using file provisioner). SSH into the jumpbox, and run the following commands.
