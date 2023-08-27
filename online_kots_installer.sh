@@ -80,7 +80,7 @@ curl -s -X 'POST' \
   -d '{
   "owner": "amit.gupta@securiti.ai",
   "co_owners": [],
-  "name": "localtest-'$(echo $RANDOM %10000+1 |bc)'",
+  "name": "localtest-'$(date +"%s")'",
   "desc": "",
   "send_notification": false
 }' > sai_appliance.txt
