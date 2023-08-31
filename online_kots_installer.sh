@@ -81,7 +81,9 @@ curl -s -X 'POST' \
   -d '{
   "owner": "'$owner'",
   "co_owners": [],
-  "name": "localtest-'$(date +"%s")'",
+  "install_mode" : "EDSS",
+  "max_pods":20,
+  "name": "$HOSTNAME-'$(date +"%s")'",
   "desc": "",
   "send_notification": false
 }' > sai_appliance.txt
@@ -91,5 +93,5 @@ SAI_LICENSE=$(cat sai_appliance.txt| jq -r '.data.license')
 
 # register with Securiti Cloud
 kubectl exec -it "$CONFIG_CTRL_POD" -n $NAMESPACE -- securitictl register -l "$SAI_LICENSE"
-
+kubectl exec -it "$CONFIG_CTRL_POD" -n $NAMESPACE -- securitictl setos -o "$NAME" -i "$PRETTY_NAME"
 echo "Registered to appliance id: $(cat sai_appliance.txt| jq -r '.data.id')"
