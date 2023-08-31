@@ -58,8 +58,8 @@ spec:
     es_host:
         value: "$es_host"
 CONFIGVALS
-
-kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n default --shared-password "securitiscanner" >install.log 2>&1 &
+NAMESPACE="default"
+kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n $NAMESPACE --shared-password "securitiscanner" >install.log 2>&1 &
 sleep 20m
 
 CONFIG_CTRL_POD=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="priv-appliance-config-controller")].metadata.name}')
@@ -90,6 +90,6 @@ SAI_LICENSE=$(cat sai_appliance.txt| jq -r '.data.license')
 # get the pod name for the config controller pod, we'll need this for registration
 
 # register with Securiti Cloud
-kubectl exec -it "$CONFIG_CTRL_POD" -n "securiti" -- securitictl register -l "$SAI_LICENSE"
+kubectl exec -it "$CONFIG_CTRL_POD" -n $NAMESPACE -- securitictl register -l "$SAI_LICENSE"
 
 echo "Registered to appliance id: $(cat sai_appliance.txt| jq -r '.data.id')"
