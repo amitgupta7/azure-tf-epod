@@ -60,7 +60,7 @@ spec:
 CONFIGVALS
 NAMESPACE="default"
 kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n $NAMESPACE --shared-password "securitiscanner" >install.log 2>&1 &
-sleep 20m
+sleep 5m
 
 CONFIG_CTRL_POD=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="priv-appliance-config-controller")].metadata.name}')
 if [ -z "$CONFIG_CTRL_POD"]
