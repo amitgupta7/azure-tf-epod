@@ -1,8 +1,9 @@
 #!/bin/bash
 set -v
-while getopts r:k:s:t:o: flag
+while getopts r:k:s:t:o:n: flag
 do
     case "${flag}" in
+        n) nameprefix=${OPTARG};;
         o) owner=${OPTARG};;
         r) region=${OPTARG};;
         k) apikey=${OPTARG};;
@@ -83,7 +84,7 @@ curl -s -X 'POST' \
   "co_owners": [],
   "install_mode" : "EDSS",
   "max_pods":20,
-  "name": "$HOSTNAME-'$(date +"%s")'",
+  "name": "'$nameprefix'-aks-'$(date +"%s")'",
   "desc": "",
   "send_notification": false
 }' > sai_appliance.txt
