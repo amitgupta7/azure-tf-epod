@@ -184,6 +184,8 @@ resource "azurerm_kubernetes_cluster" "aks" {
     enable_auto_scaling = true
     min_count           = var.min_node_count
     max_count           = var.max_node_count
+    os_disk_size_gb     = 512
+    os_sku              = "Ubuntu" 
   }
 
   identity {

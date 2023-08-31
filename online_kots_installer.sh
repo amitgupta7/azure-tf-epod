@@ -1,5 +1,8 @@
 #!/bin/bash
-set -v
+set -o nounset
+set -o errexit
+set -o pipefail
+set -x
 while getopts r:k:s:t:o:n: flag
 do
     case "${flag}" in
@@ -94,5 +97,4 @@ SAI_LICENSE=$(cat sai_appliance.txt| jq -r '.data.license')
 
 # register with Securiti Cloud
 kubectl exec -it "$CONFIG_CTRL_POD" -n $NAMESPACE -- securitictl register -l "$SAI_LICENSE"
-kubectl exec -it "$CONFIG_CTRL_POD" -n $NAMESPACE -- securitictl setos -o "$NAME" -i "$PRETTY_NAME"
 echo "Registered to appliance id: $(cat sai_appliance.txt| jq -r '.data.id')"
