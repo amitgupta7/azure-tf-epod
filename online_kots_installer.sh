@@ -25,7 +25,7 @@ POSTGRES_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-pg
 ELASTICSEARCH_DEPLOYMENT_NAME=$DEPLOYMENT_PREFIX-es
 helm repo add bitnami https://charts.bitnami.com/bitnami
 helm repo update  
-helm install $REDIS_DEPLOYMENT_NAME bitnami/redis --version "16.13.2"
+helm install $REDIS_DEPLOYMENT_NAME --set architecture=standalone bitnami/redis --version "16.13.2"
 helm install $POSTGRES_DEPLOYMENT_NAME bitnami/postgresql --version "11.9.13"
 helm install $ELASTICSEARCH_DEPLOYMENT_NAME bitnami/elasticsearch --version "18.2.16"
 ec_host=$REDIS_DEPLOYMENT_NAME-redis-master.default.svc.cluster.local
@@ -64,7 +64,7 @@ spec:
 CONFIGVALS
 NAMESPACE="default"
 kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n $NAMESPACE --shared-password "securitiscanner" >install.log 2>&1 &
-sleep 5m
+sleep 10m
 
 CONFIG_CTRL_POD=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="priv-appliance-config-controller")].metadata.name}')
 if [ -z "$CONFIG_CTRL_POD"]
