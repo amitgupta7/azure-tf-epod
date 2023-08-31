@@ -86,3 +86,7 @@ variable "azpwd" {
 variable "azuser" {
   default = "azuser"
 }
+
+variable "pod_owner" {
+  description = "Securiti tenant Admin email"
+}

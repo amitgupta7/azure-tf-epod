@@ -1,8 +1,9 @@
 #!/bin/bash
 set -v
-while getopts r:k:s:t: flag
+while getopts r:k:s:t:o: flag
 do
     case "${flag}" in
+        o) owner=${OPTARG};;
         r) region=${OPTARG};;
         k) apikey=${OPTARG};;
         s) apisecret=${OPTARG};;
@@ -58,10 +59,10 @@ spec:
         value: "$es_host"
 CONFIGVALS
 
-kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n securiti --shared-password "securitiscanner" >install.log 2>&1 &
+kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n default --shared-password "securitiscanner" >install.log 2>&1 &
 sleep 20m
 
-CONFIG_CTRL_POD=$(kubectl get pods -l app=priv-appliance-config-controller -n "securiti" -o jsonpath='{range .items[*]}{.metadata.name}{"\n"}{end}')
+CONFIG_CTRL_POD=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="priv-appliance-config-controller")].metadata.name}')
 if [ -z "$CONFIG_CTRL_POD"]
 then
   kubectl get pods -A
@@ -78,7 +79,7 @@ curl -s -X 'POST' \
   -H 'X-TIDENT:  '$apitenant \
   -H 'Content-Type: application/json' \
   -d '{
-  "owner": "amit.gupta@securiti.ai",
+  "owner": "'$owner'",
   "co_owners": [],
   "name": "localtest-'$(date +"%s")'",
   "desc": "",
