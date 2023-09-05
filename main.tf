@@ -80,10 +80,8 @@ resource "azurerm_linux_virtual_machine" "jumpbox-vm" {
   resource_group_name = var.az_resource_group
   size                = var.vm_size
   os_disk {
-    name                 = "${var.az_name_prefix}-os-disk"
-    disk_size_gb         = var.os_disk_size_in_gb
     caching              = "ReadWrite"
-    storage_account_type = "Premium_LRS"
+    storage_account_type = "Standard_LRS"
   }
   source_image_reference {
     publisher = var.os_publisher

@@ -64,7 +64,7 @@ spec:
 CONFIGVALS
 NAMESPACE="default"
 kubectl kots install "securiti-scanner" --license-file "license.yaml" --config-values "values.yaml" -n $NAMESPACE --shared-password "securitiscanner" >install.log 2>&1 &
-sleep 10m
+sleep 5m
 
 CONFIG_CTRL_POD=$(kubectl get pods -A -o jsonpath='{.items[?(@.metadata.labels.app=="priv-appliance-config-controller")].metadata.name}')
 if [ -z "$CONFIG_CTRL_POD"]
@@ -98,3 +98,6 @@ SAI_LICENSE=$(cat sai_appliance.txt| jq -r '.data.license')
 # register with Securiti Cloud
 kubectl exec -it "$CONFIG_CTRL_POD" -n $NAMESPACE -- securitictl register -l "$SAI_LICENSE"
 echo "Registered to appliance id: $(cat sai_appliance.txt| jq -r '.data.id')"
+
+# print appliance container images
+# kubectl get nodes -o json | jq '.items[].status.images[] | select(.names[1] != null) | .names[1^C .sizeBytes/1024/1024'

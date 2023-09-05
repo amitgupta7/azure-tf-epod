@@ -8,7 +8,7 @@ variable "region" {
 }
 
 variable "vm_size" {
-  default = "Standard_D8s_v3"
+  default = "Standard_B1s"
 }
 
 variable "os_disk_size_in_gb" {
@@ -62,7 +62,7 @@ variable "kubernetes_version" {
 }
 
 variable "node_vm_size" {
-  default = "Standard_D4_v2"
+  default = "Standard_D8s_v3"
 }
 
 variable "min_node_count" {
